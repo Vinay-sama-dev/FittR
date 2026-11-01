@@ -103,11 +103,19 @@ export function Navbar() {
           {/* Right Side: User Profile & Logout */}
           <div className="hidden md:flex items-center gap-3">
             {user ? (
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900 border border-white/5 text-xs text-slate-300">
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/profile"
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs transition-all ${
+                    pathname === "/profile"
+                      ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-400 font-bold"
+                      : "bg-slate-900 border-white/5 text-slate-300 hover:border-emerald-500/30 hover:text-white hover:bg-slate-800"
+                  }`}
+                  title="View Profile & Settings"
+                >
                   <UserIcon className="w-3.5 h-3.5 text-emerald-400" />
                   <span className="font-semibold text-slate-200">{user.name}</span>
-                </div>
+                </Link>
                 <button
                   onClick={handleLogout}
                   title="Sign Out"
@@ -162,7 +170,14 @@ export function Navbar() {
           })}
           {user ? (
             <div className="pt-3 border-t border-white/10 flex items-center justify-between px-3">
-              <span className="text-sm text-slate-400">Signed in as {user.name}</span>
+              <Link
+                href="/profile"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-1.5 text-sm font-semibold text-emerald-400 hover:text-emerald-300"
+              >
+                <UserIcon className="w-4 h-4" />
+                {user.name} (View Profile)
+              </Link>
               <button
                 onClick={() => {
                   setMobileMenuOpen(false);
