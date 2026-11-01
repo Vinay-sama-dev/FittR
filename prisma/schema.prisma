@@ -1,0 +1,97 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id                 String             @id @default(uuid())
+  name               String
+  email              String             @unique
+  password           String
+  preferredUnit      String             @default("METRIC") // METRIC or IMPERIAL
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  
+  trackers           Tracker[]
+  logs               TrackerLog[]
+  milestones         Milestone[]
+  efficiencyRecords  EfficiencyRecord[]
+}
+
+model Tracker {
+  id           String        @id @default(uuid())
+  userId       String
+  name         String
+  category     String        @default("General") // Workout, Habit, Body, Nutrition, Cardio
+  type         String        // NUMERIC, HABIT, COUNTER, DURATION, WORKOUT
+  unit         String?       // kg, reps, min, km, glasses, etc.
+  targetValue  Float?        // Daily target
+  color        String        @default("#10b981")
+  icon         String        @default("Activity")
+  isArchived   Boolean       @default(false)
+  sortOrder    Int           @default(0)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  logs         TrackerLog[]
+  milestones   Milestone[]
+
+  @@index([userId])
+}
+
+model TrackerLog {
+  id        String   @id @default(uuid())
+  userId    String
+  trackerId String
+  date      String   // Stored as YYYY-MM-DD
+  value     Float
+  notes     String?
+  metadata  String?  // JSON string for workout details e.g. [{"set":1,"reps":10,"weight":80}]
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tracker   Tracker  @relation(fields: [trackerId], references: [id], onDelete: Cascade)
+
+  @@index([userId, date])
+  @@index([trackerId, date])
+}
+
+model Milestone {
+  id           String    @id @default(uuid())
+  userId       String
+  trackerId    String?
+  title        String
+  description  String?
+  targetValue  Float
+  currentValue Float     @default(0)
+  category     String    @default("CUSTOM") // STREAK, PR, TOTAL_VOLUME, CUSTOM
+  isAchieved   Boolean   @default(false)
+  achievedAt   DateTime?
+  icon         String    @default("Award")
+  createdAt    DateTime  @default(now())
+
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tracker      Tracker?  @relation(fields: [trackerId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+}
+
+model EfficiencyRecord {
+  id                String   @id @default(uuid())
+  userId            String
+  date              String   // YYYY-MM-DD
+  score             Float    // 0 to 100
+  totalTrackers     Int
+  completedTrackers Int
+  createdAt         DateTime @default(now())
+
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([userId, date])
+}
