@@ -12,6 +12,7 @@ export interface UserSession {
   email: string;
   name: string;
   preferredUnit: string;
+  isDemo?: boolean;
 }
 
 export async function hashPassword(password: string): Promise<string> {
@@ -38,6 +39,7 @@ export async function verifySessionToken(token: string): Promise<UserSession | n
       email: payload.email as string,
       name: payload.name as string,
       preferredUnit: (payload.preferredUnit as string) || "METRIC",
+      isDemo: Boolean(payload.isDemo),
     };
   } catch {
     return null;

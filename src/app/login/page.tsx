@@ -11,6 +11,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [demoLoading, setDemoLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,46 +39,26 @@ export default function LoginPage() {
     }
   };
 
-  // Quick Demo Login helper for 1-click test drive
+  // P0: Secure server-side demo authentication (zero client-side credentials)
   const handleDemoLogin = async () => {
     setError(null);
-    setLoading(true);
+    setDemoLoading(true);
     try {
-      // First try logging into demo account
-      const res = await fetch("/api/auth/login", {
+      const res = await fetch("/api/auth/demo", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: "demo@fittr.local", password: "demo-password-123" }),
       });
 
-      if (res.ok) {
-        router.push("/");
-        router.refresh();
-        return;
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to launch demo mode");
       }
 
-      // If demo account doesn't exist yet, auto-create it
-      const signupRes = await fetch("/api/auth/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: "Fitness Champion",
-          email: "demo@fittr.local",
-          password: "demo-password-123",
-        }),
-      });
-
-      if (signupRes.ok) {
-        router.push("/");
-        router.refresh();
-      } else {
-        const d = await signupRes.json();
-        throw new Error(d.error || "Could not sign up demo user");
-      }
+      router.push("/");
+      router.refresh();
     } catch (err: any) {
       setError(err.message || "Demo login failed");
     } finally {
-      setLoading(false);
+      setDemoLoading(false);
     }
   };
 
@@ -144,7 +125,7 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || demoLoading}
               className="w-full mt-2 py-3 px-4 rounded-xl font-bold text-sm text-slate-950 bg-gradient-to-r from-emerald-400 to-emerald-500 hover:from-emerald-300 hover:to-emerald-400 transition-all shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 disabled:opacity-50"
             >
               {loading ? "Signing In..." : "Sign In"}
@@ -152,17 +133,32 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Quick Demo Button */}
-          <div className="mt-5 pt-5 border-t border-white/5">
+          {/* Quick Demo Section (P0: Server-side isolated auth, P1: Disclaimer note, P2: Dedicated loading state) */}
+          <div className="mt-5 pt-5 border-t border-white/5 space-y-2.5">
             <button
               type="button"
               onClick={handleDemoLogin}
-              disabled={loading}
-              className="w-full py-2.5 px-4 rounded-xl font-semibold text-xs text-slate-300 bg-white/5 hover:bg-white/10 border border-white/10 transition-all flex items-center justify-center gap-2 group"
+              disabled={loading || demoLoading}
+              className="w-full py-2.5 px-4 rounded-xl font-semibold text-xs text-slate-300 bg-white/5 hover:bg-white/10 border border-white/10 transition-all flex items-center justify-center gap-2 group disabled:opacity-50"
             >
-              <Sparkles className="w-3.5 h-3.5 text-emerald-400 group-hover:scale-110 transition-transform" />
-              1-Click Demo Login (Instant Access)
+              {demoLoading ? (
+                <>
+                  <div className="w-3.5 h-3.5 border-2 border-emerald-400/20 border-t-emerald-400 rounded-full animate-spin" />
+                  <span>Launching Demo...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-400 group-hover:scale-110 transition-transform" />
+                  <span>Explore Demo (Instant Access)</span>
+                </>
+              )}
             </button>
+            <p className="text-[11px] text-slate-500 text-center leading-relaxed">
+              Explore with a shared demo account — please do not enter personal data. To track your own fitness,{" "}
+              <Link href="/signup" className="text-emerald-400 hover:underline font-medium">
+                create a free account
+              </Link>.
+            </p>
           </div>
 
           <div className="mt-6 text-center text-xs text-slate-400">
@@ -179,4 +175,3 @@ export default function LoginPage() {
     </div>
   );
 }
-

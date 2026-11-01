@@ -93,6 +93,16 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
+    // P0: Sandboxed Demo Account Protection - cannot tamper with account credentials
+    if (session.isDemo || user.email === "demo-sandbox@fittr.internal") {
+      if (newPassword) {
+        return NextResponse.json(
+          { error: "Security restriction: Passwords cannot be modified in the shared demo environment." },
+          { status: 403 }
+        );
+      }
+    }
+
     const updateData: {
       name?: string;
       preferredUnit?: string;
