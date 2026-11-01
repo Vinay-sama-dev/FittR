@@ -88,6 +88,9 @@ export async function POST(req: NextRequest) {
     if (mode === "increment" && existingLog) {
       finalValue = existingLog.value + parseFloat(value);
     }
+    if (tracker.type === "COUNTER") {
+      finalValue = Math.max(0, finalValue);
+    }
 
     let logRecord;
     if (existingLog) {

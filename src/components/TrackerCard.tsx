@@ -8,6 +8,7 @@ import {
   Dumbbell,
   Flame,
   Plus,
+  Minus,
   Scale,
   Droplets,
   Heart,
@@ -129,19 +130,36 @@ export function TrackerCard({
               {tracker.unit || (tracker.type === "HABIT" ? "done" : "")}
             </span>
 
-            {/* Quick single-add pill right beside value for Counter Trackers */}
+            {/* Quick stepper pills right beside value for Counter Trackers */}
             {tracker.type === "COUNTER" && onDirectIncrementCounter && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDirectIncrementCounter(tracker.id, 1);
-                }}
-                className="ml-1.5 px-2 py-0.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-400 text-emerald-300 hover:text-slate-950 border border-emerald-500/30 text-[11px] font-black transition-all hover:scale-105 active:scale-95 flex items-center gap-0.5"
-                title={`Quick add +1 ${tracker.unit || ""}`}
-              >
-                <Plus className="w-3 h-3 stroke-[3]" /> 1
-              </button>
+              <div className="ml-1.5 inline-flex items-center rounded-lg bg-white/5 border border-white/10 p-0.5 gap-0.5">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDirectIncrementCounter(tracker.id, -1);
+                  }}
+                  disabled={!loggedValue || loggedValue <= 0}
+                  className="px-1.5 py-0.5 rounded-md hover:bg-rose-500/20 text-slate-400 hover:text-rose-300 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-slate-400 text-[11px] font-black transition-all active:scale-95 flex items-center"
+                  title={`Quick subtract -1 ${tracker.unit || ""}`}
+                  aria-label={`Decrease ${tracker.name} by 1`}
+                >
+                  <Minus className="w-3 h-3 stroke-[2.5]" />
+                </button>
+                <span className="w-px h-3 bg-white/10" />
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDirectIncrementCounter(tracker.id, 1);
+                  }}
+                  className="px-1.5 py-0.5 rounded-md hover:bg-emerald-500/20 text-emerald-400 hover:text-emerald-300 text-[11px] font-black transition-all active:scale-95 flex items-center"
+                  title={`Quick add +1 ${tracker.unit || ""}`}
+                  aria-label={`Increase ${tracker.name} by 1`}
+                >
+                  <Plus className="w-3 h-3 stroke-[2.5]" />
+                </button>
+              </div>
             )}
 
             {tracker.targetValue && (
@@ -186,20 +204,35 @@ export function TrackerCard({
             {isTargetMet ? "Completed" : "Mark Done"}
           </button>
         ) : tracker.type === "COUNTER" && onDirectIncrementCounter ? (
-          /* Counter Trackers: Direct Single Add Button */
+          /* Counter Trackers: Direct Stepper Controls */
           <div className="flex items-center gap-1.5">
             <button
+              type="button"
+              onClick={() => onDirectIncrementCounter(tracker.id, -1)}
+              disabled={!loggedValue || loggedValue <= 0}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-black bg-white/5 hover:bg-rose-500/20 text-slate-300 hover:text-rose-300 border border-white/10 hover:border-rose-500/30 transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-white/5 disabled:hover:text-slate-300 disabled:hover:border-white/10 active:scale-95"
+              title={`Directly subtract -1 ${tracker.unit || ""}`}
+              aria-label={`Subtract 1 from ${tracker.name}`}
+            >
+              <Minus className="w-3.5 h-3.5 stroke-[2.5]" />
+              -1
+            </button>
+            <button
+              type="button"
               onClick={() => onDirectIncrementCounter(tracker.id, 1)}
               className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-black bg-emerald-500 text-slate-950 hover:bg-emerald-400 transition-all shadow-md shadow-emerald-500/20 hover:scale-105 active:scale-95"
               title={`Directly add +1 ${tracker.unit || ""}`}
+              aria-label={`Add 1 to ${tracker.name}`}
             >
               <Plus className="w-3.5 h-3.5 stroke-[3]" />
-              Add +1
+              +1
             </button>
             <button
+              type="button"
               onClick={() => onQuickLog(tracker.id)}
               className="p-1.5 rounded-xl text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/5 transition-all text-xs"
               title="Custom count or log notes"
+              aria-label={`Open detailed logger for ${tracker.name}`}
             >
               <SlidersHorizontal className="w-3.5 h-3.5" />
             </button>

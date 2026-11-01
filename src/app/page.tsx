@@ -108,6 +108,14 @@ export default function DashboardPage() {
 
   const handleCounterIncrement = async (trackerId: string, incrementBy: number = 1) => {
     try {
+      const targetTracker = data?.trackers.find((t) => t.id === trackerId);
+      const currentVal = targetTracker?.todayLog?.value ?? 0;
+
+      // Prevent decrementing below zero
+      if (incrementBy < 0 && currentVal <= 0) {
+        return;
+      }
+
       const todayStr = data?.date || new Date().toISOString().split("T")[0];
 
       // Optimistic instant UI update
@@ -115,8 +123,8 @@ export default function DashboardPage() {
         if (!prev) return prev;
         const updatedTrackers = prev.trackers.map((t) => {
           if (t.id === trackerId) {
-            const currentVal = t.todayLog?.value ?? 0;
-            const newVal = currentVal + incrementBy;
+            const val = t.todayLog?.value ?? 0;
+            const newVal = Math.max(0, val + incrementBy);
             return {
               ...t,
               todayLog: {
@@ -143,9 +151,13 @@ export default function DashboardPage() {
 
       if (res.ok) {
         const resData = await res.json();
-        // Check if goal was just reached
-        const targetTracker = data?.trackers.find((t) => t.id === trackerId);
-        if (targetTracker?.targetValue && resData.log?.value >= targetTracker.targetValue) {
+        // Check if goal was just reached (only celebrate on positive increment when crossing target)
+        if (
+          incrementBy > 0 &&
+          targetTracker?.targetValue &&
+          resData.log?.value >= targetTracker.targetValue &&
+          currentVal < targetTracker.targetValue
+        ) {
           confetti({
             particleCount: 50,
             spread: 60,
