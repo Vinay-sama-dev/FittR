@@ -6,24 +6,13 @@ import { seedDefaultMilestones } from "@/lib/milestone-checker";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { name, email, password, registrationCode } = body;
+    const { name, email, password } = body;
 
     if (!name || !email || !password) {
       return NextResponse.json(
         { error: "Name, email, and password are required" },
         { status: 400 }
       );
-    }
-
-    // Check optional registration code if configured
-    const requiredCode = process.env.REGISTRATION_CODE;
-    if (requiredCode && requiredCode.trim() !== "") {
-      if (registrationCode !== requiredCode) {
-        return NextResponse.json(
-          { error: "Invalid registration code" },
-          { status: 403 }
-        );
-      }
     }
 
     const normalizedEmail = email.trim().toLowerCase();

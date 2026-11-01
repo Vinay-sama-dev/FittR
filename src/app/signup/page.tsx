@@ -3,14 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Activity, Lock, Mail, User, Key, ArrowRight } from "lucide-react";
+import { Activity, Lock, Mail, User, ArrowRight } from "lucide-react";
 
 export default function SignUpPage() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [registrationCode, setRegistrationCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -27,7 +26,6 @@ export default function SignUpPage() {
           name,
           email,
           password,
-          registrationCode: registrationCode || undefined,
         }),
       });
 
@@ -123,23 +121,6 @@ export default function SignUpPage() {
               </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center justify-between">
-                <span>Invite / Registration Code</span>
-                <span className="text-[10px] text-slate-500 font-normal">Optional</span>
-              </label>
-              <div className="relative">
-                <Key className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  placeholder="Leave empty if not enabled"
-                  value={registrationCode}
-                  onChange={(e) => setRegistrationCode(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950 border border-white/10 text-white text-sm focus:outline-none focus:border-emerald-500 transition-colors"
-                />
-              </div>
-            </div>
-
             <button
               type="submit"
               disabled={loading}
@@ -164,4 +145,3 @@ export default function SignUpPage() {
     </div>
   );
 }
-
