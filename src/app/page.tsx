@@ -12,6 +12,7 @@ import {
   TrendingUp,
   SlidersHorizontal,
   ChevronRight,
+  ChevronLeft,
   ShieldCheck,
 } from "lucide-react";
 import {
@@ -27,6 +28,8 @@ import confetti from "canvas-confetti";
 import { TrackerCard } from "@/components/TrackerCard";
 import { QuickLogModal } from "@/components/QuickLogModal";
 import Link from "next/link";
+import { formatDate, formatDisplayDate } from "@/lib/utils";
+import { subDays, addDays } from "date-fns";
 
 interface DashboardData {
   date: string;
@@ -49,10 +52,12 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [quickLogOpen, setQuickLogOpen] = useState(false);
   const [selectedTrackerId, setSelectedTrackerId] = useState<string | null>(null);
+  const [activeDate, setActiveDate] = useState<string>(() => formatDate(new Date()));
 
-  const fetchDashboard = useCallback(async () => {
+  const fetchDashboard = useCallback(async (dateToFetch?: string) => {
     try {
-      const res = await fetch("/api/dashboard");
+      const targetDate = dateToFetch || activeDate;
+      const res = await fetch(`/api/dashboard?date=${targetDate}`);
       if (res.status === 401) {
         router.push("/login");
         return;
@@ -65,11 +70,29 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  }, [router]);
+  }, [router, activeDate]);
 
   useEffect(() => {
-    fetchDashboard();
-  }, [fetchDashboard]);
+    fetchDashboard(activeDate);
+  }, [fetchDashboard, activeDate]);
+
+  const handlePrevDay = () => {
+    const [y, m, d] = activeDate.split("-").map(Number);
+    const prev = formatDate(subDays(new Date(y, m - 1, d, 12), 1));
+    setActiveDate(prev);
+  };
+
+  const handleNextDay = () => {
+    const today = formatDate(new Date());
+    if (activeDate >= today) return;
+    const [y, m, d] = activeDate.split("-").map(Number);
+    const next = formatDate(addDays(new Date(y, m - 1, d, 12), 1));
+    setActiveDate(next);
+  };
+
+  const handleJumpToToday = () => {
+    setActiveDate(formatDate(new Date()));
+  };
 
   const handleOpenLog = (trackerId?: string) => {
     setSelectedTrackerId(trackerId || null);
@@ -78,7 +101,7 @@ export default function DashboardPage() {
 
   const handleHabitToggle = async (trackerId: string, currentCompleted: boolean) => {
     try {
-      const todayStr = data?.date || new Date().toISOString().split("T")[0];
+      const todayStr = activeDate;
       const nextVal = currentCompleted ? 0 : 1;
 
       const res = await fetch("/api/logs", {
@@ -99,7 +122,7 @@ export default function DashboardPage() {
             origin: { y: 0.8 },
           });
         }
-        fetchDashboard();
+        fetchDashboard(activeDate);
       }
     } catch (err) {
       console.error("Toggle habit error", err);
@@ -116,7 +139,7 @@ export default function DashboardPage() {
         return;
       }
 
-      const todayStr = data?.date || new Date().toISOString().split("T")[0];
+      const todayStr = activeDate;
 
       // Optimistic instant UI update
       setData((prev) => {
@@ -164,11 +187,11 @@ export default function DashboardPage() {
             origin: { y: 0.8 },
           });
         }
-        fetchDashboard();
+        fetchDashboard(activeDate);
       }
     } catch (err) {
       console.error("Counter increment error", err);
-      fetchDashboard();
+      fetchDashboard(activeDate);
     }
   };
 
@@ -206,20 +229,52 @@ export default function DashboardPage() {
           <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5 mb-1">
             <Zap className="w-3.5 h-3.5" /> Live Fitness Hub
           </span>
-          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-            Today&apos;s Overview
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-400">
-            {new Date().toLocaleDateString("en-US", {
-              weekday: "long",
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}
-          </p>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+              {activeDate === formatDate(new Date()) ? "Today's Overview" : "Daily Overview"}
+            </h1>
+            {activeDate !== formatDate(new Date()) && (
+              <button
+                onClick={handleJumpToToday}
+                className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30 transition-all"
+              >
+                Jump to Today
+              </button>
+            )}
+          </div>
+
+          {/* Date Navigator */}
+          <div className="flex items-center gap-2 mt-2">
+            <button
+              onClick={handlePrevDay}
+              className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all"
+              title="Previous day"
+              aria-label="Previous day"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <span className="text-xs sm:text-sm font-semibold text-slate-300 flex items-center gap-1.5">
+              <CalendarIcon className="w-3.5 h-3.5 text-emerald-400" />
+              {formatDisplayDate(activeDate)}
+              {activeDate === formatDate(new Date()) && (
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  Today
+                </span>
+              )}
+            </span>
+            <button
+              onClick={handleNextDay}
+              disabled={activeDate >= formatDate(new Date())}
+              className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              title="Next day"
+              aria-label="Next day"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <Link
             href="/trackers"
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-xs font-bold text-slate-300 border border-white/5 transition-all"
@@ -481,9 +536,10 @@ export default function DashboardPage() {
       <QuickLogModal
         isOpen={quickLogOpen}
         onClose={() => setQuickLogOpen(false)}
-        onSuccess={fetchDashboard}
+        onSuccess={() => fetchDashboard(activeDate)}
         trackers={trackers}
         selectedTrackerId={selectedTrackerId}
+        selectedDate={activeDate}
       />
     </div>
   );

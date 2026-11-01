@@ -124,7 +124,7 @@ export function TrackerCard({
         <div className="mt-3 mb-4">
           <div className="flex items-baseline gap-1.5 flex-wrap">
             <span className="text-2xl font-black text-white tracking-tight">
-              {isLogged ? loggedValue : 0}
+              {isLogged ? loggedValue : tracker.type === "COUNTER" ? 0 : "—"}
             </span>
             <span className="text-xs font-semibold text-slate-400">
               {tracker.unit || (tracker.type === "HABIT" ? "done" : "")}

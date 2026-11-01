@@ -34,11 +34,14 @@ export async function GET(req: NextRequest) {
     const todayEfficiency = calculateDayEfficiency(todayStr, trackers, todayLogs);
 
     // 4. Fetch the last 7 days efficiency for trend sparkline / bar chart
+    const [y, m, d] = todayStr.split("-").map(Number);
+    const anchorDate = new Date(y, m - 1, d, 12, 0, 0);
+
     const last7Days: Array<{ date: string; label: string; score: number }> = [];
     for (let i = 6; i >= 0; i--) {
-      const d = subDays(new Date(), i);
-      const dStr = formatDate(d);
-      const label = d.toLocaleDateString("en-US", { weekday: "short" });
+      const targetD = subDays(anchorDate, i);
+      const dStr = formatDate(targetD);
+      const label = targetD.toLocaleDateString("en-US", { weekday: "short" });
 
       const dayLogs = await prisma.trackerLog.findMany({
         where: { userId: session.userId, date: dStr },
@@ -54,7 +57,7 @@ export async function GET(req: NextRequest) {
 
     // 5. Calculate streak (consecutive days with at least 1 log or efficiency >= 50%)
     let currentStreak = 0;
-    let checkDate = new Date();
+    let checkDate = anchorDate;
     // Check up to 365 days back
     for (let i = 0; i < 365; i++) {
       const dStr = formatDate(checkDate);

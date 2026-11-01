@@ -12,6 +12,12 @@ interface Tracker {
   targetValue: number | null;
   color: string;
   icon: string;
+  todayLog?: {
+    id: string;
+    value: number;
+    notes: string | null;
+    metadata?: any;
+  } | null;
 }
 
 interface QuickLogModalProps {
@@ -56,6 +62,33 @@ export function QuickLogModal({
     }
   }, [selectedTrackerId, selectedDate, trackers, trackerId]);
 
+  // Pre-fill existing log data if this tracker was already logged today
+  useEffect(() => {
+    if (!isOpen) return;
+    const active = trackers.find((t) => t.id === trackerId);
+    if (active?.todayLog) {
+      setValue(active.todayLog.value);
+      setNotes(active.todayLog.notes || "");
+      if (active.type === "WORKOUT" && active.todayLog.metadata) {
+        try {
+          const parsed =
+            typeof active.todayLog.metadata === "string"
+              ? JSON.parse(active.todayLog.metadata)
+              : active.todayLog.metadata;
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setWorkoutSets(parsed);
+          }
+        } catch {
+          // ignore
+        }
+      }
+    } else if (active) {
+      setValue(active.type === "HABIT" ? 1 : "");
+      setNotes("");
+      setWorkoutSets([{ set: 1, reps: 10, weight: 60 }]);
+    }
+  }, [trackerId, trackers, isOpen]);
+
   if (!isOpen) return null;
 
   const currentTracker = trackers.find((t) => t.id === trackerId);
@@ -74,7 +107,7 @@ export function QuickLogModal({
       }
 
       if (currentTracker.type === "HABIT") {
-        finalValue = Number(value) > 0 ? 1 : 1; // Default to 1 (completed)
+        finalValue = Number(value) >= 1 ? 1 : 0;
       } else if (currentTracker.type === "WORKOUT") {
         metadata = workoutSets;
         // Total volume or max weight for workout value
