@@ -67,6 +67,14 @@ export async function DELETE(
 
     const { id } = params;
 
+    // Sandbox check: demo users cannot delete shared trackers
+    if (session.isDemo) {
+      return NextResponse.json(
+        { error: "Trackers cannot be deleted in the shared demo environment." },
+        { status: 403 }
+      );
+    }
+
     const existing = await prisma.tracker.findFirst({
       where: { id, userId: session.userId },
     });

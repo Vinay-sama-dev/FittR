@@ -188,7 +188,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // 3. Issue Encrypted Session Token marked with isDemo: true
+    // 3. Issue Encrypted Short-Lived Demo Session Token (Expires in 2 hours for strict sandbox security)
     const token = await createSessionToken({
       userId: demoUser.id,
       email: demoUser.email,
@@ -200,6 +200,7 @@ export async function POST(req: NextRequest) {
     const response = NextResponse.json({
       message: "Demo session initiated",
       isDemo: true,
+      expiresIn: "2 hours",
       user: {
         id: demoUser.id,
         name: demoUser.name,
@@ -207,11 +208,11 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    response.cookies.set(
-      SESSION_COOKIE_OPTIONS.name,
-      token,
-      SESSION_COOKIE_OPTIONS.options
-    );
+    // 2-hour cookie expiration for demo sessions
+    response.cookies.set(SESSION_COOKIE_OPTIONS.name, token, {
+      ...SESSION_COOKIE_OPTIONS.options,
+      maxAge: 2 * 60 * 60, // 2 hours
+    });
 
     response.headers.set("X-RateLimit-Remaining", String(remaining));
 
@@ -224,3 +225,4 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
