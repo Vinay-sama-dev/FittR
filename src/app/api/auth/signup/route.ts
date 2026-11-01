@@ -120,10 +120,10 @@ export async function POST(req: NextRequest) {
     );
 
     return response;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Signup error:", error);
     return NextResponse.json(
-      { error: "Failed to create account" },
+      { error: error?.message || "Failed to create account" },
       { status: 500 }
     );
   }
