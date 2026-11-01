@@ -106,6 +106,60 @@ export default function DashboardPage() {
     }
   };
 
+  const handleCounterIncrement = async (trackerId: string, incrementBy: number = 1) => {
+    try {
+      const todayStr = data?.date || new Date().toISOString().split("T")[0];
+
+      // Optimistic instant UI update
+      setData((prev) => {
+        if (!prev) return prev;
+        const updatedTrackers = prev.trackers.map((t) => {
+          if (t.id === trackerId) {
+            const currentVal = t.todayLog?.value ?? 0;
+            const newVal = currentVal + incrementBy;
+            return {
+              ...t,
+              todayLog: {
+                ...(t.todayLog || { id: "temp", notes: null, metadata: null }),
+                value: newVal,
+              },
+            };
+          }
+          return t;
+        });
+        return { ...prev, trackers: updatedTrackers };
+      });
+
+      const res = await fetch("/api/logs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          trackerId,
+          date: todayStr,
+          value: incrementBy,
+          mode: "increment",
+        }),
+      });
+
+      if (res.ok) {
+        const resData = await res.json();
+        // Check if goal was just reached
+        const targetTracker = data?.trackers.find((t) => t.id === trackerId);
+        if (targetTracker?.targetValue && resData.log?.value >= targetTracker.targetValue) {
+          confetti({
+            particleCount: 50,
+            spread: 60,
+            origin: { y: 0.8 },
+          });
+        }
+        fetchDashboard();
+      }
+    } catch (err) {
+      console.error("Counter increment error", err);
+      fetchDashboard();
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[70vh]">
@@ -326,6 +380,7 @@ export default function DashboardPage() {
                 tracker={tracker}
                 onQuickLog={(id) => handleOpenLog(id)}
                 onDirectToggleHabit={handleHabitToggle}
+                onDirectIncrementCounter={handleCounterIncrement}
               />
             ))}
           </div>
