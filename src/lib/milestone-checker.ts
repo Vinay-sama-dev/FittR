@@ -90,3 +90,4 @@ export async function seedDefaultMilestones(userId: string) {
     await prisma.milestone.create({ data: m });
   }
 }
+

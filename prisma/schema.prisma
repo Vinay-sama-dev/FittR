@@ -95,3 +95,4 @@ model EfficiencyRecord {
   @@unique([userId, date])
   @@index([userId, date])
 }
+
