@@ -203,47 +203,13 @@ export function TrackerCard({
             <Check className="w-3.5 h-3.5 stroke-[3]" />
             {isTargetMet ? "Completed" : "Mark Done"}
           </button>
-        ) : tracker.type === "COUNTER" && onDirectIncrementCounter ? (
-          /* Counter Trackers: Direct Stepper Controls */
-          <div className="flex items-center gap-1.5">
-            <button
-              type="button"
-              onClick={() => onDirectIncrementCounter(tracker.id, -1)}
-              disabled={!loggedValue || loggedValue <= 0}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-black bg-white/5 hover:bg-rose-500/20 text-slate-300 hover:text-rose-300 border border-white/10 hover:border-rose-500/30 transition-all disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-white/5 disabled:hover:text-slate-300 disabled:hover:border-white/10 active:scale-95"
-              title={`Directly subtract -1 ${tracker.unit || ""}`}
-              aria-label={`Subtract 1 from ${tracker.name}`}
-            >
-              <Minus className="w-3.5 h-3.5 stroke-[2.5]" />
-              -1
-            </button>
-            <button
-              type="button"
-              onClick={() => onDirectIncrementCounter(tracker.id, 1)}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-black bg-emerald-500 text-slate-950 hover:bg-emerald-400 transition-all shadow-md shadow-emerald-500/20 hover:scale-105 active:scale-95"
-              title={`Directly add +1 ${tracker.unit || ""}`}
-              aria-label={`Add 1 to ${tracker.name}`}
-            >
-              <Plus className="w-3.5 h-3.5 stroke-[3]" />
-              +1
-            </button>
-            <button
-              type="button"
-              onClick={() => onQuickLog(tracker.id)}
-              className="p-1.5 rounded-xl text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/5 transition-all text-xs"
-              title="Custom count or log notes"
-              aria-label={`Open detailed logger for ${tracker.name}`}
-            >
-              <SlidersHorizontal className="w-3.5 h-3.5" />
-            </button>
-          </div>
         ) : (
-          /* Numeric, Workout, and Duration: Full Log Modal Trigger */
+          /* Numeric, Counter, Workout, and Duration: Full Log Modal Trigger */
           <button
             onClick={() => onQuickLog(tracker.id)}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-white/5 hover:bg-emerald-500/20 text-slate-200 hover:text-emerald-400 border border-white/10 hover:border-emerald-500/30 transition-all"
           >
-            <Plus className="w-3.5 h-3.5" />
+            <SlidersHorizontal className="w-3.5 h-3.5" />
             {isLogged ? "Update" : "Log"}
           </button>
         )}
