@@ -3,7 +3,8 @@ import { getUserFromRequest } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
 import { calculateDayEfficiency } from "@/lib/efficiency";
-import { ensureEssentialTrackers, syncUserBMI, getBMICategory } from "@/lib/tracker-config";
+import { getBMICategory } from "@/lib/tracker-config";
+import { ensureEssentialTrackers, syncUserBMI } from "@/lib/tracker-service";
 import { subDays } from "date-fns";
 
 export const dynamic = "force-dynamic";

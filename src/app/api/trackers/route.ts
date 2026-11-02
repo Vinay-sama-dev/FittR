@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserFromRequest } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { ensureEssentialTrackers, normalizeCategory } from "@/lib/tracker-config";
+import { normalizeCategory } from "@/lib/tracker-config";
+import { ensureEssentialTrackers } from "@/lib/tracker-service";
 
 export const dynamic = "force-dynamic";
 

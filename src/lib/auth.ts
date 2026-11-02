@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { NextRequest } from "next/server";
+import { prisma } from "@/lib/prisma";
 
 const JWT_SECRET = process.env.JWT_SECRET || "fittr-fallback-secret-key-1234567890";
 const secretKey = new TextEncoder().encode(JWT_SECRET);
@@ -51,7 +52,20 @@ export async function getCurrentUser(): Promise<UserSession | null> {
     const cookieStore = cookies();
     const token = cookieStore.get(COOKIE_NAME)?.value;
     if (!token) return null;
-    return await verifySessionToken(token);
+    const session = await verifySessionToken(token);
+    if (!session) return null;
+
+    const user = await prisma.user.findUnique({
+      where: { id: session.userId },
+      select: { id: true, preferredUnit: true },
+    });
+    if (!user) return null;
+
+    if (user.preferredUnit) {
+      session.preferredUnit = user.preferredUnit;
+    }
+
+    return session;
   } catch {
     return null;
   }
@@ -60,7 +74,24 @@ export async function getCurrentUser(): Promise<UserSession | null> {
 export async function getUserFromRequest(req: NextRequest): Promise<UserSession | null> {
   const token = req.cookies.get(COOKIE_NAME)?.value;
   if (!token) return null;
-  return await verifySessionToken(token);
+  const session = await verifySessionToken(token);
+  if (!session) return null;
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: session.userId },
+      select: { id: true, preferredUnit: true },
+    });
+    if (!user) return null;
+
+    if (user.preferredUnit) {
+      session.preferredUnit = user.preferredUnit;
+    }
+
+    return session;
+  } catch {
+    return null;
+  }
 }
 
 export const SESSION_COOKIE_OPTIONS = {

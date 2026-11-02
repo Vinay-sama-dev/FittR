@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { hashPassword, createSessionToken, SESSION_COOKIE_OPTIONS } from "@/lib/auth";
 import { seedDefaultMilestones } from "@/lib/milestone-checker";
-import { ensureEssentialTrackers } from "@/lib/tracker-config";
+import { ensureEssentialTrackers } from "@/lib/tracker-service";
 
 export async function POST(req: NextRequest) {
   try {

@@ -3,7 +3,7 @@ import { getUserFromRequest } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { calculateDayEfficiency } from "@/lib/efficiency";
 import { checkAndUpdateMilestones } from "@/lib/milestone-checker";
-import { syncUserBMI } from "@/lib/tracker-config";
+import { syncUserBMI } from "@/lib/tracker-service";
 
 export const dynamic = "force-dynamic";
 

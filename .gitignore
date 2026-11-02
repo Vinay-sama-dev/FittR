@@ -36,4 +36,5 @@ prisma/dev.db-journal
 .DS_Store
 *.pem
 Thumbs.db
+*.tsbuildinfo
 

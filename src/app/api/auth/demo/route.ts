@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { createSessionToken, hashPassword, SESSION_COOKIE_OPTIONS } from "@/lib/auth";
 import { rateLimit } from "@/lib/rate-limit";
 import { formatDate } from "@/lib/utils";
-import { ensureEssentialTrackers, syncUserBMI } from "@/lib/tracker-config";
+import { ensureEssentialTrackers, syncUserBMI } from "@/lib/tracker-service";
 import { subDays } from "date-fns";
 
 export const dynamic = "force-dynamic";
