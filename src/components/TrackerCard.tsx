@@ -14,7 +14,9 @@ import {
   Heart,
   TrendingUp,
   SlidersHorizontal,
+  ShieldCheck,
 } from "lucide-react";
+import { getBMICategory } from "@/lib/tracker-config";
 
 interface Tracker {
   id: string;
@@ -25,6 +27,8 @@ interface Tracker {
   targetValue: number | null;
   color: string;
   icon: string;
+  isEssential?: boolean;
+  systemCode?: string | null;
   todayLog?: {
     id: string;
     value: number;
@@ -95,9 +99,16 @@ export function TrackerCard({
               <IconComponent className="w-5 h-5 stroke-[2.2]" />
             </div>
             <div>
-              <h4 className="text-sm font-bold text-white tracking-tight">
-                {tracker.name}
-              </h4>
+              <div className="flex items-center gap-1.5">
+                <h4 className="text-sm font-bold text-white tracking-tight">
+                  {tracker.name}
+                </h4>
+                {tracker.isEssential && (
+                  <span className="text-[9px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                    Essential
+                  </span>
+                )}
+              </div>
               <span className="text-[11px] font-medium text-slate-400 capitalize">
                 {tracker.category} • {tracker.type.toLowerCase()}
               </span>
@@ -129,6 +140,13 @@ export function TrackerCard({
             <span className="text-xs font-semibold text-slate-400">
               {tracker.unit || (tracker.type === "HABIT" ? "done" : "")}
             </span>
+
+            {/* BMI Classification badge */}
+            {tracker.systemCode === "BMI" && isLogged && (
+              <span className={`ml-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-white/5 border border-white/10 ${getBMICategory(loggedValue).color}`}>
+                {getBMICategory(loggedValue).label}
+              </span>
+            )}
 
             {/* Quick stepper pills right beside value for Counter Trackers */}
             {tracker.type === "COUNTER" && onDirectIncrementCounter && (

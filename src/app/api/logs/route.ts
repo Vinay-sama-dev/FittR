@@ -3,6 +3,7 @@ import { getUserFromRequest } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { calculateDayEfficiency } from "@/lib/efficiency";
 import { checkAndUpdateMilestones } from "@/lib/milestone-checker";
+import { syncUserBMI } from "@/lib/tracker-config";
 
 export const dynamic = "force-dynamic";
 
@@ -146,6 +147,11 @@ export async function POST(req: NextRequest) {
         completedTrackers: efficiency.completedTrackers,
       },
     });
+
+    // Auto-sync BMI if weight or height was updated
+    if (tracker.systemCode === "WEIGHT" || tracker.systemCode === "HEIGHT") {
+      await syncUserBMI(session.userId, date);
+    }
 
     // Check milestones in background/inline
     await checkAndUpdateMilestones(session.userId);

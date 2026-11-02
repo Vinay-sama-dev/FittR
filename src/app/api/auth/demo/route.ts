@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { createSessionToken, hashPassword, SESSION_COOKIE_OPTIONS } from "@/lib/auth";
 import { rateLimit } from "@/lib/rate-limit";
 import { formatDate } from "@/lib/utils";
+import { ensureEssentialTrackers, syncUserBMI } from "@/lib/tracker-config";
 import { subDays } from "date-fns";
 
 export const dynamic = "force-dynamic";
@@ -187,6 +188,10 @@ export async function POST(req: NextRequest) {
         },
       });
     }
+
+    // Ensure all 4 categories and essential cards are provisioned for demo
+    await ensureEssentialTrackers(demoUser.id, demoUser.preferredUnit);
+    await syncUserBMI(demoUser.id, formatDate(new Date()));
 
     // 3. Issue Encrypted Short-Lived Demo Session Token (Expires in 2 hours for strict sandbox security)
     const token = await createSessionToken({

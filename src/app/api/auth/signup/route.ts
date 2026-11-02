@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { hashPassword, createSessionToken, SESSION_COOKIE_OPTIONS } from "@/lib/auth";
 import { seedDefaultMilestones } from "@/lib/milestone-checker";
+import { ensureEssentialTrackers } from "@/lib/tracker-config";
 
 export async function POST(req: NextRequest) {
   try {
@@ -44,55 +45,47 @@ export async function POST(req: NextRequest) {
     // Seed initial milestone templates
     await seedDefaultMilestones(user.id);
 
-    // Seed default starter trackers so the user has an immediate, ready-to-use dashboard
-    const defaultTrackers = [
+    // Ensure the 4 official categories & essential trackers (Calories, Protein, Carbs, Fat, Weight, Height, BMI)
+    await ensureEssentialTrackers(user.id, user.preferredUnit);
+
+    // Seed starter training & habit trackers
+    const starterTrackers = [
       {
         userId: user.id,
         name: "Morning Hydration",
-        category: "Habit",
+        category: "Habits",
         type: "COUNTER",
         unit: "glasses",
         targetValue: 8,
         color: "#06b6d4",
         icon: "Droplets",
-        sortOrder: 1,
+        sortOrder: 8,
       },
       {
         userId: user.id,
         name: "Daily Workout",
-        category: "Workout",
+        category: "Training",
         type: "HABIT",
         unit: "session",
         targetValue: 1,
         color: "#10b981",
         icon: "Dumbbell",
-        sortOrder: 2,
-      },
-      {
-        userId: user.id,
-        name: "Body Weight",
-        category: "Body",
-        type: "NUMERIC",
-        unit: "kg",
-        targetValue: 75,
-        color: "#8b5cf6",
-        icon: "Scale",
-        sortOrder: 3,
+        sortOrder: 9,
       },
       {
         userId: user.id,
         name: "Push-ups",
-        category: "Workout",
+        category: "Training",
         type: "COUNTER",
         unit: "reps",
         targetValue: 50,
         color: "#f97316",
         icon: "Flame",
-        sortOrder: 4,
+        sortOrder: 10,
       },
     ];
 
-    for (const t of defaultTrackers) {
+    for (const t of starterTrackers) {
       await prisma.tracker.create({ data: t });
     }
 

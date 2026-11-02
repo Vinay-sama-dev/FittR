@@ -83,6 +83,14 @@ export async function DELETE(
       return NextResponse.json({ error: "Tracker not found" }, { status: 404 });
     }
 
+    // Essential cards cannot be deleted (Nutrition: Calories, Protein, Carbs, Fat; Measurements: Weight, Height, BMI)
+    if (existing.isEssential) {
+      return NextResponse.json(
+        { error: `"${existing.name}" is a mandatory essential tracker and cannot be deleted.` },
+        { status: 400 }
+      );
+    }
+
     await prisma.tracker.delete({
       where: { id },
     });

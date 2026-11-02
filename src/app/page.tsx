@@ -14,6 +14,10 @@ import {
   ChevronRight,
   ChevronLeft,
   ShieldCheck,
+  Utensils,
+  Scale,
+  Dumbbell,
+  Ruler,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -42,6 +46,16 @@ interface DashboardData {
   weeklyTrend: Array<{ date: string; label: string; score: number }>;
   streak: number;
   trackers: any[];
+  weightComparison?: {
+    current: number;
+    previous: number;
+    delta: number;
+    previousDate: string;
+  } | null;
+  bmiCategory?: {
+    label: string;
+    color: string;
+  } | null;
   recentMilestones: any[];
   pendingMilestones: any[];
 }
@@ -53,6 +67,7 @@ export default function DashboardPage() {
   const [quickLogOpen, setQuickLogOpen] = useState(false);
   const [selectedTrackerId, setSelectedTrackerId] = useState<string | null>(null);
   const [activeDate, setActiveDate] = useState<string>(() => formatDate(new Date()));
+  const [dashboardCategory, setDashboardCategory] = useState<string>("All");
 
   const fetchDashboard = useCallback(async (dateToFetch?: string) => {
     try {
@@ -209,6 +224,19 @@ export default function DashboardPage() {
   if (!data) return null;
 
   const { efficiency, weeklyTrend, streak, trackers, recentMilestones, pendingMilestones } = data;
+
+  const filteredTrackers =
+    dashboardCategory === "All"
+      ? trackers
+      : trackers.filter((t: any) => t.category === dashboardCategory);
+
+  const calTracker = trackers.find((t: any) => t.systemCode === "CALORIES");
+  const proTracker = trackers.find((t: any) => t.systemCode === "PROTEIN");
+  const carbTracker = trackers.find((t: any) => t.systemCode === "CARBS");
+  const fatTracker = trackers.find((t: any) => t.systemCode === "FAT");
+  const weightTracker = trackers.find((t: any) => t.systemCode === "WEIGHT");
+  const heightTracker = trackers.find((t: any) => t.systemCode === "HEIGHT");
+  const bmiTracker = trackers.find((t: any) => t.systemCode === "BMI");
 
   // Grade color
   let scoreColor = "text-emerald-400";
@@ -407,30 +435,209 @@ export default function DashboardPage() {
       </div>
 
       {/* Main Grid: Trackers List */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h2 className="text-lg font-bold text-white tracking-tight">
-              Active Trackers ({trackers.length})
+              Active Trackers ({filteredTrackers.length})
             </h2>
             <p className="text-xs text-slate-400">
               Tap &apos;Log&apos; or check off habits to update today&apos;s score
             </p>
           </div>
-          <Link
-            href="/trackers"
-            className="text-xs font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-1"
-          >
-            Customize Trackers <ChevronRight className="w-3.5 h-3.5" />
-          </Link>
+
+          <div className="flex items-center gap-2">
+            <Link
+              href="/trackers"
+              className="text-xs font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-1"
+            >
+              Customize Categories & Cards <ChevronRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
         </div>
 
-        {trackers.length === 0 ? (
+        {/* Four Category Filter Pills */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+          {["All", "Nutrition", "Measurements", "Training", "Habits"].map((cat) => {
+            const count =
+              cat === "All"
+                ? trackers.length
+                : trackers.filter((t: any) => t.category === cat).length;
+            const isActive = dashboardCategory === cat;
+
+            return (
+              <button
+                key={cat}
+                onClick={() => setDashboardCategory(cat)}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                  isActive
+                    ? "bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20"
+                    : "bg-slate-900 hover:bg-slate-800 text-slate-300 border border-white/5"
+                }`}
+              >
+                {cat === "Nutrition" && <Utensils className="w-3 h-3" />}
+                {cat === "Measurements" && <Scale className="w-3 h-3" />}
+                {cat === "Training" && <Dumbbell className="w-3 h-3" />}
+                {cat === "Habits" && <Flame className="w-3 h-3" />}
+                {cat} ({count})
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Nutrition Deep-Dive Macro Widget */}
+        {dashboardCategory === "Nutrition" && (
+          <div className="glass-panel rounded-3xl p-6 bg-gradient-to-br from-amber-500/5 via-slate-900 to-slate-950 border border-amber-500/20 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
+                  <Utensils className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white">Daily Macro Distribution</h3>
+                  <p className="text-[11px] text-slate-400">
+                    Energy intake & macronutrient ratio vs daily targets
+                  </p>
+                </div>
+              </div>
+
+              {calTracker && (
+                <button
+                  onClick={() => handleOpenLog(calTracker.id)}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-amber-500 text-slate-950 text-xs font-bold hover:bg-amber-400 transition-all shadow-md shadow-amber-500/20"
+                >
+                  <Plus className="w-3.5 h-3.5 stroke-[3]" /> Log Meals & Macros
+                </button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-white/5">
+                <span className="text-[11px] font-semibold text-amber-400 uppercase tracking-wider block mb-1">
+                  Calories
+                </span>
+                <span className="text-2xl font-black text-white">
+                  {calTracker?.todayLog?.value ?? 0}
+                </span>
+                <span className="text-xs text-slate-400 ml-1">/ {calTracker?.targetValue || 2000} kcal</span>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-white/5">
+                <span className="text-[11px] font-semibold text-rose-400 uppercase tracking-wider block mb-1">
+                  Protein
+                </span>
+                <span className="text-2xl font-black text-white">
+                  {proTracker?.todayLog?.value ?? 0}g
+                </span>
+                <span className="text-xs text-slate-400 ml-1">/ {proTracker?.targetValue || 140}g</span>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-white/5">
+                <span className="text-[11px] font-semibold text-blue-400 uppercase tracking-wider block mb-1">
+                  Carbs
+                </span>
+                <span className="text-2xl font-black text-white">
+                  {carbTracker?.todayLog?.value ?? 0}g
+                </span>
+                <span className="text-xs text-slate-400 ml-1">/ {carbTracker?.targetValue || 220}g</span>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-white/5">
+                <span className="text-[11px] font-semibold text-purple-400 uppercase tracking-wider block mb-1">
+                  Fat
+                </span>
+                <span className="text-2xl font-black text-white">
+                  {fatTracker?.todayLog?.value ?? 0}g
+                </span>
+                <span className="text-xs text-slate-400 ml-1">/ {fatTracker?.targetValue || 65}g</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Body Measurements & BMI Widget */}
+        {dashboardCategory === "Measurements" && (
+          <div className="glass-panel rounded-3xl p-6 bg-gradient-to-br from-cyan-500/5 via-slate-900 to-slate-950 border border-cyan-500/20 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center">
+                  <Scale className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white">Body Composition & Metrics</h3>
+                  <p className="text-[11px] text-slate-400">
+                    Weight trends, height, auto-computed BMI & circumferences
+                  </p>
+                </div>
+              </div>
+
+              {weightTracker && (
+                <button
+                  onClick={() => handleOpenLog(weightTracker.id)}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-cyan-500 text-slate-950 text-xs font-bold hover:bg-cyan-400 transition-all shadow-md shadow-cyan-500/20"
+                >
+                  <Plus className="w-3.5 h-3.5 stroke-[3]" /> Log Measurements
+                </button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-white/5">
+                <span className="text-[11px] font-semibold text-cyan-400 uppercase tracking-wider block mb-1">
+                  Current Weight
+                </span>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-black text-white">
+                    {weightTracker?.todayLog?.value ? `${weightTracker.todayLog.value} kg` : "—"}
+                  </span>
+                  {data?.weightComparison && (
+                    <span
+                      className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                        data.weightComparison.delta <= 0
+                          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                          : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                      }`}
+                    >
+                      {data.weightComparison.delta > 0 ? `+${data.weightComparison.delta}` : data.weightComparison.delta} kg
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-white/5">
+                <span className="text-[11px] font-semibold text-emerald-400 uppercase tracking-wider block mb-1">
+                  Height
+                </span>
+                <span className="text-2xl font-black text-white">
+                  {heightTracker?.todayLog?.value || heightTracker?.targetValue || 175} cm
+                </span>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-white/5">
+                <span className="text-[11px] font-semibold text-indigo-400 uppercase tracking-wider block mb-1">
+                  Body Mass Index (BMI)
+                </span>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-black text-white">
+                    {bmiTracker?.todayLog?.value ?? "—"}
+                  </span>
+                  {data?.bmiCategory && (
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full bg-white/5 ${data.bmiCategory.color}`}>
+                      {data.bmiCategory.label}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {filteredTrackers.length === 0 ? (
           <div className="glass-panel rounded-3xl p-10 text-center space-y-3">
             <Activity className="w-10 h-10 text-slate-600 mx-auto" />
-            <h3 className="text-base font-bold text-white">No active trackers</h3>
+            <h3 className="text-base font-bold text-white">No active trackers in this category</h3>
             <p className="text-xs text-slate-400 max-w-sm mx-auto">
-              Create your first custom tracker to track workouts, reps, habits, or body metrics.
+              Create your first custom tracker or configure targets for this category.
             </p>
             <Link
               href="/trackers"
@@ -441,7 +648,7 @@ export default function DashboardPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {trackers.map((tracker) => (
+            {filteredTrackers.map((tracker: any) => (
               <TrackerCard
                 key={tracker.id}
                 tracker={tracker}

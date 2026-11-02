@@ -26,12 +26,14 @@ model Tracker {
   id           String        @id @default(uuid())
   userId       String
   name         String
-  category     String        @default("General") // Workout, Habit, Body, Nutrition, Cardio
-  type         String        // NUMERIC, HABIT, COUNTER, DURATION, WORKOUT
-  unit         String?       // kg, reps, min, km, glasses, etc.
+  category     String        @default("General") // Nutrition, Measurements, Training, Habits
+  type         String        // NUMERIC, HABIT, COUNTER, DURATION, WORKOUT, CALCULATED
+  unit         String?       // kg, g, kcal, cm, reps, min, km, etc.
   targetValue  Float?        // Daily target
   color        String        @default("#10b981")
   icon         String        @default("Activity")
+  isEssential  Boolean       @default(false)     // Mandatory cards cannot be deleted
+  systemCode   String?       // e.g. CALORIES, PROTEIN, CARBS, FAT, WEIGHT, HEIGHT, BMI
   isArchived   Boolean       @default(false)
   sortOrder    Int           @default(0)
   createdAt    DateTime      @default(now())

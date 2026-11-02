@@ -3,6 +3,7 @@ import { getUserFromRequest } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { formatDate } from "@/lib/utils";
 import { calculateDayEfficiency } from "@/lib/efficiency";
+import { ensureEssentialTrackers, syncUserBMI, getBMICategory } from "@/lib/tracker-config";
 import { subDays } from "date-fns";
 
 export const dynamic = "force-dynamic";
@@ -18,13 +19,19 @@ export async function GET(req: NextRequest) {
     const dateParam = searchParams.get("date");
     const todayStr = dateParam || formatDate(new Date());
 
-    // 1. Fetch all active trackers
+    // 1. Ensure all 4 mandatory categories & essential cards exist
+    await ensureEssentialTrackers(session.userId, session.preferredUnit);
+
+    // 2. Automatically sync BMI for this date
+    await syncUserBMI(session.userId, todayStr);
+
+    // 3. Fetch all active trackers
     const trackers = await prisma.tracker.findMany({
       where: { userId: session.userId, isArchived: false },
       orderBy: { sortOrder: "asc" },
     });
 
-    // 2. Fetch today's logs for this user
+    // 4. Fetch today's logs for this user
     const todayLogs = await prisma.trackerLog.findMany({
       where: { userId: session.userId, date: todayStr },
       include: { tracker: true },
@@ -104,11 +111,48 @@ export async function GET(req: NextRequest) {
               id: log.id,
               value: log.value,
               notes: log.notes,
-              metadata: log.metadata ? JSON.parse(log.metadata) : null,
+              metadata: (() => {
+                if (!log.metadata) return null;
+                try {
+                  return typeof log.metadata === "string" ? JSON.parse(log.metadata) : log.metadata;
+                } catch {
+                  return log.metadata;
+                }
+              })(),
             }
           : null,
       };
     });
+
+    // 8. Measurement comparisons & BMI classification
+    const weightTracker = trackers.find((t) => t.systemCode === "WEIGHT");
+    let weightComparison = null;
+    if (weightTracker) {
+      const currentLog = trackerLogMap.get(weightTracker.id);
+      if (currentLog) {
+        const previousLog = await prisma.trackerLog.findFirst({
+          where: {
+            userId: session.userId,
+            trackerId: weightTracker.id,
+            date: { lt: todayStr },
+          },
+          orderBy: { date: "desc" },
+        });
+        if (previousLog) {
+          const delta = Math.round((currentLog.value - previousLog.value) * 10) / 10;
+          weightComparison = {
+            current: currentLog.value,
+            previous: previousLog.value,
+            delta,
+            previousDate: previousLog.date,
+          };
+        }
+      }
+    }
+
+    const bmiTracker = trackers.find((t) => t.systemCode === "BMI");
+    const bmiLog = bmiTracker ? trackerLogMap.get(bmiTracker.id) : null;
+    const bmiCategory = bmiLog ? getBMICategory(bmiLog.value) : null;
 
     return NextResponse.json({
       date: todayStr,
@@ -116,6 +160,8 @@ export async function GET(req: NextRequest) {
       weeklyTrend: last7Days,
       streak: currentStreak,
       trackers: trackersWithToday,
+      weightComparison,
+      bmiCategory,
       recentMilestones,
       pendingMilestones,
     });
